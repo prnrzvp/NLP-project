@@ -45,6 +45,8 @@ def train_ngram_model(train_path, save_path, max_n_gram, min_count):
     print("Training finished")
     print("Model saved to:", save_path)
     print(model)
+    print("\n")
+    print()
 
     return model
 
@@ -80,7 +82,7 @@ def main():
 
     parser.add_argument(
         "--train_path",
-        default="data/splits/train.txt",
+        default="scr/data/splits/tinystories_train.txt"
     )
 
     parser.add_argument(

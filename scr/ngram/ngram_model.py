@@ -2,7 +2,7 @@ import math
 import pickle
 from collections import Counter, defaultdict
 from pathlib import Path
-
+from tqdm import tqdm
 
 class NGramModel:
 
@@ -27,12 +27,15 @@ class NGramModel:
 
         self.counts = {n: defaultdict(Counter) for n in range(1, self.max_n_gram + 1)} # stores [n-gram model][
 
+        self.prefix_index = {}
+        self.non_special_vocab = []
+
         self.is_trained = False
 
 
 
-    def train(self, tokenized_sentences):
-        
+    def train(self, tokenized_sentences, show_progress=True):
+    
         sentences = [list(sentence) for sentence in tokenized_sentences]
 
         if not sentences:
@@ -40,7 +43,9 @@ class NGramModel:
 
         raw_counts = Counter()
 
-        for sentence in sentences:
+        sentence_iterator = tqdm(sentences, desc="Building vocabulary", disable=not show_progress)
+
+        for sentence in sentence_iterator:
             cleaned_sentence = [word.lower().strip() for word in sentence if word.strip()]
             raw_counts.update(cleaned_sentence)
 
@@ -52,13 +57,15 @@ class NGramModel:
         self.word_counts = Counter()
         self.counts = {n: defaultdict(Counter) for n in range(1, self.max_n_gram + 1)}
 
-        for sentence in sentences:
+        sentence_iterator = tqdm(sentences, desc="Training n-gram model", disable=not show_progress)
+
+        for sentence in sentence_iterator:
             normalized_sentence = [self._normalize_word(word) for word in sentence if word.strip()]
             self._update_counts_from_sentence(normalized_sentence)
 
         self.total_words = sum(self.word_counts.values())
+        self._build_prefix_index()
         self.is_trained = True
-
 
 
     def _update_counts_from_sentence(self, sentence):
@@ -138,10 +145,7 @@ class NGramModel:
 
         candidates = self.get_candidates(prefix)
 
-        scored_candidates = [
-            (word, self.interpolated_probability(context, word, lambdas=lambdas))
-            for word in candidates
-        ]
+        scored_candidates = [(word, self.interpolated_probability(context, word, lambdas=lambdas)) for word in candidates]
 
         ranked = self._rank_candidates(scored_candidates, top_k=top_k)
 
@@ -154,12 +158,8 @@ class NGramModel:
         self._check_trained()
 
         prefix = prefix.lower().strip()
-        special_tokens = {self.start_token, self.end_token, self.unk_token}
 
-        if prefix == "":
-            return [word for word in self.vocab if word not in special_tokens]
-
-        return [word for word in self.vocab if word not in special_tokens and word.startswith(prefix)]
+        return self.prefix_index.get(prefix, [])
 
     def next_word_distribution(self, context, n=4):
         self._check_trained()
@@ -202,15 +202,12 @@ class NGramModel:
         with path.open("wb") as f:
             pickle.dump(self, f)
 
-    
+    @staticmethod
     def load(path):
         path = Path(path)
 
         with path.open("rb") as f:
             model = pickle.load(f)
-
-        if not isinstance(model, NGramModel):
-            raise TypeError("Loaded object is not an NGramModel.")
 
         return model
 
@@ -252,14 +249,26 @@ class NGramModel:
 
         return tuple(normalized_context[-context_size:])
 
+    def _build_prefix_index(self):
+        special_tokens = {self.start_token, self.end_token, self.unk_token}
+
+        self.non_special_vocab = [word for word in self.vocab if word not in special_tokens]
+        self.prefix_index = {"": self.non_special_vocab}
+
+        for word in self.non_special_vocab:
+            for i in range(1, len(word) + 1):
+                prefix = word[:i]
+
+                if prefix not in self.prefix_index:
+                    self.prefix_index[prefix] = []
+
+                self.prefix_index[prefix].append(word)
+
     def _rank_candidates(self, scored_candidates, top_k):
         if top_k <= 0:
             return []
 
-        ranked = sorted(
-            scored_candidates,
-            key=lambda item: (-item[1], -self.word_counts.get(item[0], 0), len(item[0]), item[0]),
-        )
+        ranked = sorted(scored_candidates, key=lambda item: (-item[1], -self.word_counts.get(item[0], 0), len(item[0]), item[0]))
 
         return ranked[:top_k]
 
@@ -286,12 +295,8 @@ class NGramModel:
         if not math.isclose(total, 1.0, rel_tol=1e-6, abs_tol=1e-6):
             raise ValueError(f"interpolation weights must sum to 1. Got {total}.")
 
+    
+
+    
     def __repr__(self):
-        return (
-            f"NGramModel("
-            f"max_n_gram={self.max_n_gram}, "
-            f"min_count={self.min_count}, "
-            f"vocab_size={len(self.vocab)}, "
-            f"is_trained={self.is_trained}"
-            f")"
-        )
+        return f"NGramModel(max_n_gram={self.max_n_gram}, min_count={self.min_count}, vocab_size={len(self.vocab)}, is_trained={self.is_trained})"

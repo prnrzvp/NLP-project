@@ -1,6 +1,12 @@
-*.i
-*.ii
-*.gpu
-*.ptx
-*.cubin
-*.fatbin
+.DS_Store
+.docs/
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# generated data/models
+models/
+*.pkl
