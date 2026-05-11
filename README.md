@@ -35,3 +35,15 @@ NLP-Project/
 ├── requirements.txt
 └── README.md
 ```
+
+## Do the following to test the word predictor, run first the folllowing command:
+
+```bash
+ python scr/ngram/ngram_train.py 
+ ``` 
+
+ ## The run the gui and start typing
+
+ ```bash 
+ python scr/gui_app.py
+ ```
