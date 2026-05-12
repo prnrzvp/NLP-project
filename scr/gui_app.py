@@ -56,23 +56,26 @@ def cached_suggest(text, top_k):
 
     return context, prefix, suggestions, candidate_count
 
-
 HTML = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>N-gram Word Predictor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
     :root {
-        --bg: #090b10;
-        --panel: rgba(18, 22, 33, 0.82);
-        --panel-strong: rgba(24, 30, 44, 0.95);
-        --text: #eef2ff;
-        --muted: #9ca8bd;
+        --bg: #080a12;
+        --panel: rgba(17, 24, 39, 0.78);
+        --panel-strong: rgba(24, 31, 46, 0.94);
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --soft: #cbd5e1;
         --border: rgba(255, 255, 255, 0.12);
         --accent: #8b5cf6;
         --accent-2: #22d3ee;
-        --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+        --good: #34d399;
+        --shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
     }
 
     * {
@@ -85,169 +88,302 @@ HTML = """
     }
 
     body {
+        min-height: 100vh;
+        margin: 0;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-        max-width: 900px;
-        margin: 40px auto;
-        padding: 24px;
         color: var(--text);
         background:
-            radial-gradient(circle at top left, rgba(139, 92, 246, 0.26), transparent 34%),
-            radial-gradient(circle at top right, rgba(34, 211, 238, 0.18), transparent 30%),
-            linear-gradient(135deg, #090b10 0%, #101522 55%, #080a0f 100%);
+            radial-gradient(circle at 12% 8%, rgba(139, 92, 246, 0.32), transparent 30%),
+            radial-gradient(circle at 88% 14%, rgba(34, 211, 238, 0.2), transparent 32%),
+            radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.09), transparent 30%),
+            linear-gradient(135deg, #070913 0%, #111827 52%, #070913 100%);
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    .page {
+        width: min(1120px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 46px 0;
+    }
+
+    .hero {
+        margin-bottom: 28px;
+    }
+
+    .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        padding: 7px 11px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.055);
+        color: #dbeafe;
+        font-size: 13px;
+        backdrop-filter: blur(14px);
+    }
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--good);
+        box-shadow: 0 0 18px rgba(52, 211, 153, 0.8);
     }
 
     h1 {
-        margin: 0 0 8px;
-        font-size: clamp(34px, 6vw, 56px);
-        letter-spacing: -0.05em;
-        line-height: 1;
-        background: linear-gradient(135deg, #ffffff, #b9c4ff 45%, #7dd3fc);
+        margin: 0;
+        font-size: clamp(38px, 7vw, 72px);
+        letter-spacing: -0.07em;
+        line-height: 0.95;
+        background: linear-gradient(135deg, #ffffff, #c4b5fd 48%, #67e8f9);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
     }
 
     .subtitle {
+        max-width: 660px;
+        margin: 16px 0 0;
         color: var(--muted);
-        margin-bottom: 28px;
-        font-size: 17px;
+        font-size: 18px;
+        line-height: 1.6;
+    }
+
+    .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.75fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .card {
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035)),
+            var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+    }
+
+    .composer {
+        padding: 22px;
+    }
+
+    .suggestion-panel {
+        padding: 18px;
+        position: sticky;
+        top: 22px;
+    }
+
+    .section-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .section-title {
+        margin: 0;
+        font-size: 15px;
+        color: #e2e8f0;
+        letter-spacing: 0.02em;
+    }
+
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.055);
+        color: #bfdbfe;
+        font-size: 12px;
+        white-space: nowrap;
     }
 
     textarea {
         width: 100%;
-        height: 160px;
-        font-size: 22px;
-        padding: 18px 20px;
-        border-radius: 20px;
-        border: 1px solid var(--border);
-        background: rgba(8, 12, 20, 0.76);
-        color: var(--text);
-        box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        min-height: 240px;
         resize: vertical;
-        line-height: 1.5;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 22px;
+        padding: 20px 22px;
+        background: rgba(7, 11, 21, 0.84);
+        color: var(--text);
+        font: inherit;
+        font-size: 23px;
+        line-height: 1.55;
         caret-color: var(--accent-2);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            0 20px 55px rgba(0, 0, 0, 0.22);
         transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
     }
 
     textarea::placeholder {
-        color: #667085;
+        color: #64748b;
     }
 
     textarea:focus {
         outline: none;
-        border-color: rgba(34, 211, 238, 0.7);
-        background: rgba(10, 15, 26, 0.92);
+        border-color: rgba(34, 211, 238, 0.72);
+        background: rgba(8, 13, 25, 0.96);
         box-shadow:
-            var(--shadow),
             0 0 0 4px rgba(34, 211, 238, 0.12),
-            0 0 36px rgba(139, 92, 246, 0.15);
+            0 22px 70px rgba(0, 0, 0, 0.36),
+            0 0 48px rgba(139, 92, 246, 0.16);
     }
 
-    .info {
-        margin-top: 18px;
-        padding: 16px 18px;
-        background: var(--panel);
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .info-box {
+        min-height: 76px;
+        padding: 13px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 18px;
-        border: 1px solid var(--border);
-        font-size: 15px;
-        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.28);
-        backdrop-filter: blur(14px);
+        background: rgba(255, 255, 255, 0.045);
     }
 
-    .info-row {
-        margin: 7px 0;
+    .info-label {
+        display: block;
+        margin-bottom: 7px;
         color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
     }
 
-    .label {
-        font-weight: 700;
-        color: #dbe4ff;
-    }
-
-    #contextText,
-    #prefixText,
-    #modeText {
+    .info-value {
         color: #f8fafc;
+        font-size: 14px;
+        line-height: 1.45;
+        word-break: break-word;
     }
 
     .status {
-        color: #8ee7ff;
+        margin-top: 14px;
+        color: #a5f3fc;
         font-size: 14px;
-        margin-top: 10px;
     }
 
-    .suggestions {
-        margin-top: 24px;
+    .suggestions-list {
         display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        min-height: 54px;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 280px;
     }
 
     .suggestion-button {
-        font-size: 18px;
-        padding: 12px 19px;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 999px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
         background:
-            linear-gradient(135deg, rgba(139, 92, 246, 0.98), rgba(34, 211, 238, 0.82));
+            linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(34, 211, 238, 0.09)),
+            rgba(255, 255, 255, 0.055);
         color: white;
         cursor: pointer;
-        box-shadow: 0 12px 30px rgba(34, 211, 238, 0.14);
-        transition:
-            transform 0.12s ease,
-            box-shadow 0.12s ease,
-            filter 0.12s ease;
+        text-align: left;
+        transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
     }
 
     .suggestion-button:hover {
         transform: translateY(-2px);
-        filter: brightness(1.08);
-        box-shadow: 0 18px 42px rgba(139, 92, 246, 0.28);
+        border-color: rgba(34, 211, 238, 0.45);
+        background:
+            linear-gradient(135deg, rgba(139, 92, 246, 0.32), rgba(34, 211, 238, 0.16)),
+            rgba(255, 255, 255, 0.075);
+        box-shadow: 0 16px 38px rgba(34, 211, 238, 0.12);
     }
 
     .suggestion-button:active {
         transform: translateY(0);
     }
 
+    .rank {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.09);
+        color: #bae6fd;
+        font-weight: 800;
+        font-size: 13px;
+    }
+
+    .word {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 20px;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+    }
+
     .score {
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--soft);
         font-size: 12px;
-        opacity: 0.72;
-        margin-left: 8px;
+        font-variant-numeric: tabular-nums;
     }
 
     .empty {
-        color: var(--muted);
-        margin-top: 8px;
-        padding: 12px 14px;
-        border-radius: 14px;
+        padding: 16px;
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        border-radius: 18px;
         background: rgba(255, 255, 255, 0.04);
-        border: 1px dashed rgba(255, 255, 255, 0.14);
+        color: var(--muted);
+        line-height: 1.5;
     }
 
     .hint {
-        margin-top: 26px;
+        margin: 16px 0 0;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.09);
         color: var(--muted);
-        font-size: 14px;
-        background: var(--panel);
-        padding: 15px 17px;
-        border-radius: 18px;
-        border: 1px solid var(--border);
-        box-shadow: 0 16px 45px rgba(0, 0, 0, 0.22);
-        backdrop-filter: blur(14px);
-    }
-
-    .hint strong {
-        color: #f8fafc;
+        font-size: 13px;
+        line-height: 1.6;
     }
 
     kbd {
-        background: rgba(255, 255, 255, 0.08);
-        color: #e0f2fe;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        padding: 2px 7px;
         border: 1px solid rgba(255, 255, 255, 0.16);
-        border-bottom-color: rgba(255, 255, 255, 0.28);
+        border-bottom-color: rgba(255, 255, 255, 0.32);
         border-radius: 7px;
-        padding: 3px 7px;
+        background: rgba(255, 255, 255, 0.075);
+        color: #e0f2fe;
         font-size: 12px;
         box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -256,61 +392,106 @@ HTML = """
         background: rgba(34, 211, 238, 0.35);
     }
 
-    @media (max-width: 640px) {
-        body {
-            margin: 20px auto;
-            padding: 18px;
+    @media (max-width: 860px) {
+        .workspace {
+            grid-template-columns: 1fr;
+        }
+
+        .suggestion-panel {
+            position: static;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 560px) {
+        .page {
+            width: min(100% - 24px, 1120px);
+            padding: 28px 0;
+        }
+
+        .composer,
+        .suggestion-panel {
+            padding: 16px;
+            border-radius: 22px;
         }
 
         textarea {
+            min-height: 190px;
             font-size: 19px;
-            border-radius: 16px;
+            border-radius: 18px;
         }
 
         .suggestion-button {
-            font-size: 16px;
+            grid-template-columns: 36px minmax(0, 1fr);
+        }
+
+        .score {
+            grid-column: 2;
+            width: fit-content;
         }
     }
 </style>
 </head>
 
 <body>
-    <h1>N-gram Word Predictor</h1>
+    <div class="page">
+        <header class="hero">
+            <div class="eyebrow">
+                <span class="dot"></span>
+                Local n-gram model
+            </div>
 
-    <div class="subtitle">
-        Suggestions update while typing using the trained n-gram model.
-    </div>
+            <h1>Word Predictor</h1>
 
-    <textarea id="inputBox" placeholder="Start typing here..."></textarea>
+            <p class="subtitle">
+                Type a sentence and get ranked next-word or prefix-completion suggestions from your trained n-gram model.
+            </p>
+        </header>
 
-    <div class="info">
-        <div class="info-row">
-            <span class="label">Context:</span>
-            <span id="contextText">[]</span>
-        </div>
+        <main class="workspace">
+            <section class="card composer">
+                <div class="section-top">
+                    <h2 class="section-title">Input text</h2>
+                    <span class="pill" id="modeText">next-word prediction</span>
+                </div>
 
-        <div class="info-row">
-            <span class="label">Current prefix:</span>
-            <span id="prefixText">(empty)</span>
-        </div>
+                <textarea id="inputBox" placeholder="Start typing here..."></textarea>
 
-        <div class="info-row">
-            <span class="label">Mode:</span>
-            <span id="modeText">next-word prediction</span>
-        </div>
+                <div class="info-grid">
+                    <div class="info-box">
+                        <span class="info-label">Context</span>
+                        <span class="info-value" id="contextText">[]</span>
+                    </div>
 
-        <div class="info-row status" id="statusText">
-            Ready.
-        </div>
-    </div>
+                    <div class="info-box">
+                        <span class="info-label">Current prefix</span>
+                        <span class="info-value" id="prefixText">(empty)</span>
+                    </div>
 
-    <div id="suggestions" class="suggestions"></div>
+                    <div class="info-box">
+                        <span class="info-label">Model status</span>
+                        <span class="info-value" id="statusText">Ready.</span>
+                    </div>
+                </div>
+            </section>
 
-    <div class="hint">
-        <strong>Important:</strong>
-        <kbd>a very basic gui</kbd>.
-        <br>
-        <kbd>
+            <aside class="card suggestion-panel">
+                <div class="section-top">
+                    <h2 class="section-title">Suggestions</h2>
+                    <span class="pill">Top matches</span>
+                </div>
+
+                <div id="suggestions" class="suggestions-list"></div>
+
+                <p class="hint">
+                    Click a suggestion to insert it into the text box.
+                    Suggestions are shown vertically so the ranking is easier to scan.
+                </p>
+            </aside>
+        </main>
     </div>
 
     <script>
@@ -378,22 +559,28 @@ HTML = """
             suggestionsDiv.innerHTML = "";
 
             if (!data.suggestions || data.suggestions.length === 0) {
-                suggestionsDiv.innerHTML = "<div class='empty'>No suggestions found.</div>";
+                suggestionsDiv.innerHTML = "<div class='empty'>No suggestions found yet. Try typing another prefix or a longer context.</div>";
                 return;
             }
 
-            for (const item of data.suggestions) {
+            data.suggestions.forEach((item, index) => {
                 const button = document.createElement("button");
                 button.className = "suggestion-button";
                 button.type = "button";
 
+                const rankSpan = document.createElement("span");
+                rankSpan.className = "rank";
+                rankSpan.textContent = String(index + 1).padStart(2, "0");
+
                 const wordSpan = document.createElement("span");
+                wordSpan.className = "word";
                 wordSpan.textContent = item.word;
 
                 const scoreSpan = document.createElement("span");
                 scoreSpan.className = "score";
                 scoreSpan.textContent = Number(item.score).toExponential(2);
 
+                button.appendChild(rankSpan);
                 button.appendChild(wordSpan);
                 button.appendChild(scoreSpan);
 
@@ -402,7 +589,7 @@ HTML = """
                 });
 
                 suggestionsDiv.appendChild(button);
-            }
+            });
         }
 
         async function fetchSuggestionsNow() {
@@ -415,7 +602,7 @@ HTML = """
 
             currentAbortController = new AbortController();
 
-            statusText.textContent = "Updating suggestions...";
+            statusText.textContent = "Updating...";
 
             try {
                 const response = await fetch("/suggest", {
@@ -425,7 +612,7 @@ HTML = """
                     },
                     body: JSON.stringify({
                         text: text,
-                        top_k: 5
+                        top_k: 7
                     }),
                     signal: currentAbortController.signal
                 });
@@ -447,15 +634,14 @@ HTML = """
                 renderSuggestions(data);
 
                 statusText.textContent =
-                    `Updated in ${data.elapsed_ms.toFixed(1)} ms. ` +
-                    `Scored ${data.candidate_count} candidates.`;
+                    `${data.elapsed_ms.toFixed(1)} ms · ${data.candidate_count} candidates`;
 
             } catch (error) {
                 if (error.name === "AbortError") {
                     return;
                 }
 
-                statusText.textContent = "Could not update suggestions.";
+                statusText.textContent = "Could not update.";
             }
         }
 
@@ -468,7 +654,7 @@ HTML = """
 
             debounceTimer = setTimeout(() => {
                 fetchSuggestionsNow();
-            }, 60);
+            }, 70);
         }
 
         function insertSuggestion(word) {
