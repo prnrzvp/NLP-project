@@ -1,0 +1,90 @@
+{
+    "top_k_values": [
+        1,
+        2,
+        3,
+        4
+    ],
+    "lambdas": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 0.1,
+        "4": 0.9
+    },
+    "include_empty_prefix": false,
+    "max_test_sentences": 7500,
+    "results_by_top_k": {
+        "1": {
+            "top_k": 1,
+            "total_words": 65958,
+            "total_characters": 255286,
+            "saved_keystrokes": 147550,
+            "saved_keystroke_ratio": 0.5779792076337911,
+            "top_k_correct_words": 21453,
+            "top_k_accuracy": 0.3252524333666879,
+            "cross_entropy": 5.5549599925345365,
+            "perplexity": 258.5166217188654,
+            "lambdas": {
+                "1": 0.0,
+                "2": 0.0,
+                "3": 0.1,
+                "4": 0.9
+            },
+            "include_empty_prefix": false
+        },
+        "2": {
+            "top_k": 2,
+            "total_words": 65958,
+            "total_characters": 255286,
+            "saved_keystrokes": 167488,
+            "saved_keystroke_ratio": 0.6560798477002264,
+            "top_k_correct_words": 29089,
+            "top_k_accuracy": 0.4410230752903363,
+            "cross_entropy": 5.5549599925345365,
+            "perplexity": 258.5166217188654,
+            "lambdas": {
+                "1": 0.0,
+                "2": 0.0,
+                "3": 0.1,
+                "4": 0.9
+            },
+            "include_empty_prefix": false
+        },
+        "3": {
+            "top_k": 3,
+            "total_words": 65958,
+            "total_characters": 255286,
+            "saved_keystrokes": 173665,
+            "saved_keystroke_ratio": 0.6802762391983893,
+            "top_k_correct_words": 33915,
+            "top_k_accuracy": 0.5141908487219139,
+            "cross_entropy": 5.5549599925345365,
+            "perplexity": 258.5166217188654,
+            "lambdas": {
+                "1": 0.0,
+                "2": 0.0,
+                "3": 0.1,
+                "4": 0.9
+            },
+            "include_empty_prefix": false
+        },
+        "4": {
+            "top_k": 4,
+            "total_words": 65958,
+            "total_characters": 255286,
+            "saved_keystrokes": 176900,
+            "saved_keystroke_ratio": 0.6929483011210955,
+            "top_k_correct_words": 37249,
+            "top_k_accuracy": 0.5647381667121502,
+            "cross_entropy": 5.5549599925345365,
+            "perplexity": 258.5166217188654,
+            "lambdas": {
+                "1": 0.0,
+                "2": 0.0,
+                "3": 0.1,
+                "4": 0.9
+            },
+            "include_empty_prefix": false
+        }
+    }
+}

@@ -82,7 +82,7 @@ def main():
 
     parser.add_argument(
         "--train_path",
-        default="scr/data/splits/tinystories_train.txt"
+        default="scr/data/tiny_stories/tinystories_train.txt"
     )
 
     parser.add_argument(

@@ -10,3 +10,4 @@ __pycache__/
 # generated data/models
 models/
 *.pkl
+scr/data/

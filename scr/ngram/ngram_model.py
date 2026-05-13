@@ -3,6 +3,7 @@ import pickle
 from collections import Counter, defaultdict
 from pathlib import Path
 from tqdm import tqdm
+import heapq
 
 class NGramModel:
 
@@ -29,6 +30,8 @@ class NGramModel:
 
         self.prefix_index = {}
         self.non_special_vocab = []
+
+        self.context_totals = {n: {} for n in range(1, self.max_n_gram + 1)}
 
         self.is_trained = False
 
@@ -65,6 +68,7 @@ class NGramModel:
 
         self.total_words = sum(self.word_counts.values())
         self._build_prefix_index()
+        self._build_context_totals()
         self.is_trained = True
 
 
@@ -98,8 +102,13 @@ class NGramModel:
 
         vocab_size = len(self.vocab)
 
-        numerator = self.counts[n][context_tuple][word] + 1
-        denominator = sum(self.counts[n][context_tuple].values()) + vocab_size
+        context_counter = self.counts[n].get(context_tuple)
+        count = 0 if context_counter is None else context_counter.get(word, 0)
+
+        context_total = self.context_totals[n].get(context_tuple, 0)
+
+        numerator = count + 1
+        denominator = context_total + vocab_size
 
         return numerator / denominator
 
@@ -160,6 +169,16 @@ class NGramModel:
         prefix = prefix.lower().strip()
 
         return self.prefix_index.get(prefix, [])
+    
+
+    def _build_context_totals(self):
+        self.context_totals = {}
+
+        for n in range(1, self.max_n_gram + 1):
+            self.context_totals[n] = {}
+
+            for context, counter in self.counts[n].items():
+                self.context_totals[n][context] = sum(counter.values())
 
     def next_word_distribution(self, context, n=4):
         self._check_trained()
@@ -268,9 +287,16 @@ class NGramModel:
         if top_k <= 0:
             return []
 
-        ranked = sorted(scored_candidates, key=lambda item: (-item[1], -self.word_counts.get(item[0], 0), len(item[0]), item[0]))
-
-        return ranked[:top_k]
+        return heapq.nsmallest(
+            top_k,
+            scored_candidates,
+            key=lambda item: (
+                -item[1],
+                -self.word_counts.get(item[0], 0),
+                len(item[0]),
+                item[0],
+            ),
+        )
 
     def _check_trained(self):
         if not self.is_trained:

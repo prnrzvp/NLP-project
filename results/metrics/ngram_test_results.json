@@ -1,0 +1,27 @@
+{
+    "best_lambdas": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 0.1,
+        "4": 0.9
+    },
+    "test_metrics": {
+        "total_words": 34292,
+        "total_characters": 133398,
+        "saved_keystrokes": 90912,
+        "saved_keystroke_ratio": 0.6815094679080645,
+        "top_k_accuracy": 0.5143765309693223,
+        "top_k_correct_words": 17639,
+        "success_rate": 0.9518838212994284,
+        "appeared_rate": 0.9987752245421673,
+        "mean_chars_typed_until_suggestion": 1.2389478595590808,
+        "top_k": 3,
+        "lambdas": {
+            "1": 0.0,
+            "2": 0.0,
+            "3": 0.1,
+            "4": 0.9
+        },
+        "include_empty_prefix": false
+    }
+}

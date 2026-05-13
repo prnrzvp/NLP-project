@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 from functools import lru_cache
 from time import perf_counter
+import heapq
 
 from flask import Flask, jsonify, request, render_template_string
 
@@ -9,7 +10,9 @@ from flask import Flask, jsonify, request, render_template_string
 CURRENT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_DIR.parent if CURRENT_DIR.name == "scr" else CURRENT_DIR
 NGRAM_DIR = PROJECT_ROOT / "scr" / "ngram"
-MODEL_PATH = PROJECT_ROOT / "models" / "ngram" / "ngram_model.pkl"
+
+#MODEL_PATH = PROJECT_ROOT / "models" / "ngram" / "wikitext2_ngram_model.pkl"
+MODEL_PATH = PROJECT_ROOT / "models" / "ngram" / "Tiny_stories_ngram_model.pkl"
 
 sys.path.insert(0, str(NGRAM_DIR))
 
@@ -19,6 +22,12 @@ from ngram_model import NGramModel
 app = Flask(__name__)
 
 ngram_model = NGramModel.load(MODEL_PATH)
+BEST_LAMBDAS = {
+    1: 0.0,
+    2: 0.0,
+    3: 0.1,
+    4: 0.9,
+}
 
 if not hasattr(ngram_model, "prefix_index") or not ngram_model.prefix_index:
     ngram_model._build_prefix_index()
@@ -35,19 +44,31 @@ VOCAB = list(ngram_model.non_special_vocab)
 VOCAB.sort(key=lambda word: (-ngram_model.word_counts.get(word, 0), len(word), word))
 
 
-def fast_predict_interpolated(context, prefix, top_k=5):
+def fast_predict_interpolated(context, prefix, top_k=5, lambdas=BEST_LAMBDAS):
     candidates = ngram_model.get_candidates(prefix)
 
     scored_candidates = []
 
     for word in candidates:
-        score = ngram_model.interpolated_probability(context=context, word=word)
+        score = ngram_model.interpolated_probability(
+            context=context,
+            word=word,
+            lambdas=lambdas,
+        )
         scored_candidates.append((word, score))
 
-    ranked = sorted(scored_candidates, key=lambda item: (-item[1], -ngram_model.word_counts.get(item[0], 0), len(item[0]), item[0]))
+    ranked = heapq.nsmallest(
+        top_k,
+        scored_candidates,
+        key=lambda item: (
+            -item[1],
+            -ngram_model.word_counts.get(item[0], 0),
+            len(item[0]),
+            item[0],
+        ),
+    )
 
-    return ranked[:top_k], len(candidates)
-
+    return ranked, len(candidates)
 
 @lru_cache(maxsize=2048)
 def cached_suggest(text, top_k):
