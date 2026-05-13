@@ -1,5 +1,8 @@
 # NLP-project
 
+![Screenshot](/Users/hej/NLP-project/miscl/image_web.png)
+
+
 Project folder overivew 
 
 ```
